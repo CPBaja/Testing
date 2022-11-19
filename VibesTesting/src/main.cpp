@@ -15,7 +15,9 @@ String subsystem = "Ben";
 Bounce button = Bounce();
 File out;
 
-Adafruit_LSM6DSO32 lsm6d = Adafruit_LSM6DSO32();
+Adafruit_LSM6DSO32 lsm6d1 = Adafruit_LSM6DSO32();
+Adafruit_LSM6DSO32 lsm6d2 = Adafruit_LSM6DSO32();
+Adafruit_LSM6DSO32 lsm6d3 = Adafruit_LSM6DSO32();
 
 typedef union accel_t_gyro_union
 {
@@ -48,16 +50,22 @@ typedef union accel_t_gyro_union
     } value;
 } accel_t_gyro_union;
 
-sensors_event_t accel;
-sensors_event_t gyro;
-sensors_event_t temp;
+sensors_event_t accel1;
+sensors_event_t gyro1;
+sensors_event_t temp1;
+sensors_event_t accel2;
+sensors_event_t gyro2;
+sensors_event_t temp2;
+sensors_event_t accel3;
+sensors_event_t gyro3;
+sensors_event_t temp3;
 
 int MPU6050_read(int address, int start, uint8_t *buffer, int size);
 int MPU6050_write_reg(int address, int reg, uint8_t data);
 int MPU6050_write(int address, int start, const uint8_t *pData, int size);
 void run();
 void createFile();
-void writeToFile(sensors_event_t accel, sensors_event_t gyro);
+void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3);
 
 void setup()
 {
@@ -83,16 +91,26 @@ void setup()
     // MPU6050_write_reg(ADDRESS2, 0x1C, bit(3)|bit(4));
 
     //Attempt to connect gyro. If gyro is not found, freeze the program
-    if (!lsm6d.begin_I2C()) {
+    if (!lsm6d1.begin_I2C() || !lsm6d2.begin_I2C() || !lsm6d3.begin_I2C()) {
         while (1) {
             delay(10);
     }
   }
 
-    lsm6d.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
-    lsm6d.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
-    lsm6d.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
-    lsm6d.setGyroDataRate(LSM6DS_RATE_6_66K_HZ);
+    lsm6d1.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
+    lsm6d1.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
+    lsm6d1.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
+    lsm6d1.setGyroDataRate(LSM6DS_RATE_6_66K_HZ);
+
+    lsm6d2.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
+    lsm6d2.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
+    lsm6d2.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
+    lsm6d2.setGyroDataRate(LSM6DS_RATE_6_66K_HZ);
+
+    lsm6d3.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
+    lsm6d3.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
+    lsm6d3.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
+    lsm6d3.setGyroDataRate(LSM6DS_RATE_6_66K_HZ);
 
     // Setup SD card
     // Serial.print("Initializing SD card...");
@@ -174,14 +192,14 @@ void createFile()
     //    out.println();
     //    out.println();
     //  }
-    out.print("Accel1_X,Accel1_Y,Accel1_Z,Gyro1_X,Gyro1_Y,Gyro1_Z,Sample_Time (µs)\n");
+    out.print("Accel1_X,Accel1_Y,Accel1_Z,Accel2_X,Accel2_Y,Accel2_Z,Accel3_X,Accel3_Y,Accel3_Z,Sample_Time (µs)\n");
     //  out.print("Accel2_X,Accel2_Y,Accel2_Z,Gyro2_X,Gyro2_Y,Gyro2_Z,,");
     //  out.println("Sample_Time (µs)");
 }
 
-void writeToFile(sensors_event_t accel, sensors_event_t gyro) {
+void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3) {
     unsigned long time = micros();
-    out.printf("%i,%i,%i,%f,%f,%f,%lu\n", accel.acceleration.x, accel.acceleration.y, accel.acceleration.z, gyro.gyro.x, gyro.gyro.y, gyro.gyro.z, time);
+    out.printf("%i,%i,%i,%i,%i,%i,%i,%i,%i,%lu\n", accel1.acceleration.x, accel1.acceleration.y, accel1.acceleration.z, accel2.acceleration.x, accel2.acceleration.y, accel2.acceleration.z, accel3.acceleration.x, accel3.acceleration.y, accel3.acceleration.z, time);
     //out.flush();
 }
 
@@ -256,9 +274,11 @@ void run()
 
     // // // Cleanup
     // // out.flush();
-    lsm6d.getEvent(&accel, &gyro, &temp);
+    lsm6d1.getEvent(&accel1, &gyro1, &temp1);
+    lsm6d1.getEvent(&accel2, &gyro2, &temp2);
+    lsm6d1.getEvent(&accel3, &gyro3, &temp3);
 
-    writeToFile(accel, gyro);
+    writeToFile(accel1, accel2, accel3);
 }
 
 // --------------------------------------------------------
