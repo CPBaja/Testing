@@ -1,4 +1,4 @@
-accelerometer specs:
+accelerometer specs: 
    • https://www.adafruit.com/product/4692#technical-details
 adafruit library documentation:
    • https://github.com/adafruit/Adafruit_LSM6DS

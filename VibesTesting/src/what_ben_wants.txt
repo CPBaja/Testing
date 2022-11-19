@@ -1,5 +1,5 @@
 linear accelerations from all three
-time
+time 
 
 configure 32G scale
 
