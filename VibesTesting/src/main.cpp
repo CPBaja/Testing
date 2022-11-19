@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Bounce2.h>
+#include <Adafruit_LSM6DSO32.h>
 
 #define BUTTON_PIN 20
 
@@ -13,6 +14,8 @@ String subsystem = "Ben";
 
 Bounce button = Bounce();
 File out;
+
+Adafruit_LSM6DSO32 lsm6d = Adafruit_LSM6DSO32();
 
 typedef union accel_t_gyro_union
 {
@@ -45,12 +48,16 @@ typedef union accel_t_gyro_union
     } value;
 } accel_t_gyro_union;
 
+sensors_event_t accel;
+sensors_event_t gyro;
+sensors_event_t temp;
+
 int MPU6050_read(int address, int start, uint8_t *buffer, int size);
 int MPU6050_write_reg(int address, int reg, uint8_t data);
 int MPU6050_write(int address, int start, const uint8_t *pData, int size);
 void run();
 void createFile();
-void writeToFile(accel_t_gyro_union accel_t_gyro1);
+void writeToFile(sensors_event_t accel, sensors_event_t gyro);
 
 void setup()
 {
@@ -67,13 +74,25 @@ void setup()
     // }
 
     // Setup Accelerometer
-    Wire.begin();
+    //  Wire.begin();
     // Clear the 'sleep' bit to start the sensor.
-    MPU6050_write_reg(ADDRESS1, 0x6B, 0);
+    //  MPU6050_write_reg(ADDRESS1, 0x6B, 0);
     // MPU6050_write_reg(ADDRESS2, 0x6B, 0);
     //  Set to 16G range
-    MPU6050_write_reg(ADDRESS1, 0x1C, bit(3) | bit(4));
+    //  MPU6050_write_reg(ADDRESS1, 0x1C, bit(3) | bit(4));
     // MPU6050_write_reg(ADDRESS2, 0x1C, bit(3)|bit(4));
+
+    //Attempt to connect gyro. If gyro is not found, freeze the program
+    if (!lsm6d.begin_I2C()) {
+        while (1) {
+            delay(10);
+    }
+  }
+
+    lsm6d.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
+    lsm6d.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
+    lsm6d.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
+    lsm6d.setGyroDataRate(LSM6DS_RATE_6_66K_HZ);
 
     // Setup SD card
     // Serial.print("Initializing SD card...");
@@ -160,35 +179,35 @@ void createFile()
     //  out.println("Sample_Time (µs)");
 }
 
-void writeToFile(accel_t_gyro_union accel_t_gyro1) {
+void writeToFile(sensors_event_t accel, sensors_event_t gyro) {
     unsigned long time = micros();
-    out.printf("%i,%i,%i,%i,%i,%i,%lu\n", accel_t_gyro1.value.x_accel, accel_t_gyro1.value.y_accel, accel_t_gyro1.value.z_accel, accel_t_gyro1.value.x_gyro, accel_t_gyro1.value.y_gyro, accel_t_gyro1.value.z_gyro, time);
+    out.printf("%i,%i,%i,%f,%f,%f,%lu\n", accel.acceleration.x, accel.acceleration.y, accel.acceleration.z, gyro.gyro.x, gyro.gyro.y, gyro.gyro.z, time);
     //out.flush();
 }
 
 void run()
 {
 
-    accel_t_gyro_union accel_t_gyro1;
-    // accel_t_gyro_union accel_t_gyro2;
+//     accel_t_gyro_union accel_t_gyro1;
+//     // accel_t_gyro_union accel_t_gyro2;
 
-    // Read raw values
-    MPU6050_read(ADDRESS1, 0x3B, (uint8_t *)&accel_t_gyro1, sizeof(accel_t_gyro1));
-    // MPU6050_read(ADDRESS2, 0x3B, (uint8_t *) &accel_t_gyro2, sizeof(accel_t_gyro2));
+//     // Read raw values
+//     MPU6050_read(ADDRESS1, 0x3B, (uint8_t *)&accel_t_gyro1, sizeof(accel_t_gyro1));
+//     // MPU6050_read(ADDRESS2, 0x3B, (uint8_t *) &accel_t_gyro2, sizeof(accel_t_gyro2));
 
-    // Swap values
-    uint8_t swap;
-#define SWAP(x, y) \
-    swap = x;      \
-    x = y;         \
-    y = swap
+//     // Swap values
+//     uint8_t swap;
+// #define SWAP(x, y) \
+//     swap = x;      \
+//     x = y;         \
+//     y = swap
 
-    SWAP(accel_t_gyro1.reg.x_accel_h, accel_t_gyro1.reg.x_accel_l);
-    SWAP(accel_t_gyro1.reg.y_accel_h, accel_t_gyro1.reg.y_accel_l);
-    SWAP(accel_t_gyro1.reg.z_accel_h, accel_t_gyro1.reg.z_accel_l);
-    SWAP(accel_t_gyro1.reg.x_gyro_h, accel_t_gyro1.reg.x_gyro_l);
-    SWAP(accel_t_gyro1.reg.y_gyro_h, accel_t_gyro1.reg.y_gyro_l);
-    SWAP(accel_t_gyro1.reg.z_gyro_h, accel_t_gyro1.reg.z_gyro_l);
+//     SWAP(accel_t_gyro1.reg.x_accel_h, accel_t_gyro1.reg.x_accel_l);
+//     SWAP(accel_t_gyro1.reg.y_accel_h, accel_t_gyro1.reg.y_accel_l);
+//     SWAP(accel_t_gyro1.reg.z_accel_h, accel_t_gyro1.reg.z_accel_l);
+//     SWAP(accel_t_gyro1.reg.x_gyro_h, accel_t_gyro1.reg.x_gyro_l);
+//     SWAP(accel_t_gyro1.reg.y_gyro_h, accel_t_gyro1.reg.y_gyro_l);
+//     SWAP(accel_t_gyro1.reg.z_gyro_h, accel_t_gyro1.reg.z_gyro_l);
 
     // SWAP (accel_t_gyro2.reg.x_accel_h, accel_t_gyro2.reg.x_accel_l);
     // SWAP (accel_t_gyro2.reg.y_accel_h, accel_t_gyro2.reg.y_accel_l);
@@ -237,7 +256,9 @@ void run()
 
     // // // Cleanup
     // // out.flush();
-    writeToFile(accel_t_gyro1);
+    lsm6d.getEvent(&accel, &gyro, &temp);
+
+    writeToFile(accel, gyro);
 }
 
 // --------------------------------------------------------
