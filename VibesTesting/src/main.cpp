@@ -6,7 +6,9 @@
 #define BUTTON_PIN 20
 
 #define ADDRESS1 0x68
-//#define ADDRESS2 0x69
+#define ADDRESS2 0x69 //
+
+// if: "code //" then the "//" means it was commented on the inital upload & was uncommented for testing
 
 String directory = "teensy";
 String subsystem = "Ben";
@@ -59,41 +61,41 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 
     // // Open serial communications and wait for port to open:
-    // Serial.begin(9600);
-    // while (!Serial)
-    // {
-    //     ; // Wait for serial port to connect. Needed for native USB port only.
-    // }
+    Serial.begin(9600); //
+    while (!Serial) //
+    { //
+         ; // Wait for serial port to connect. Needed for native USB port only. //
+    } //
 
     // Setup Accelerometer
     Wire.begin();
     // Clear the 'sleep' bit to start the sensor.
     MPU6050_write_reg(ADDRESS1, 0x6B, 0);
-    // MPU6050_write_reg(ADDRESS2, 0x6B, 0);
+    MPU6050_write_reg(ADDRESS2, 0x6B, 0); //
     //  Set to 16G range
     MPU6050_write_reg(ADDRESS1, 0x1C, bit(3) | bit(4));
-    // MPU6050_write_reg(ADDRESS2, 0x1C, bit(3)|bit(4));
+    MPU6050_write_reg(ADDRESS2, 0x1C, bit(3)|bit(4)); //
 
     // Setup SD card
-    // Serial.print("Initializing SD card...");
+    Serial.print("Initializing SD card..."); //
     if (!SD.begin(BUILTIN_SDCARD))
     {
-        // Serial.println("initialization failed!");
+        Serial.println("initialization failed!"); //
         return;
     }
-    // Serial.println("initialization done.");
+    Serial.println("initialization done."); //
 
     // Create arduino directory
     const char *dir = directory.c_str();
     if (!SD.exists(dir))
     {
         SD.mkdir(dir);
-        // Serial.println("Created directory '" + directory + "'.");
+        Serial.println("Created directory '" + directory + "'."); //
     }
     else
     {
-        // Serial.println("Directory '" + directory + "' already exists.");
-    }
+        Serial.println("Directory '" + directory + "' already exists."); //
+    } 
 }
 
 void loop()
@@ -132,10 +134,10 @@ void createFile()
     } while (SD.exists(filename));
 
     out = SD.open(filename, FILE_WRITE_BEGIN);
-    // Serial.print("Created file ");
-    // Serial.print(fileNumber);
-    // Serial.print(".csv in directory.");
-    // Serial.println();
+    Serial.print("Created file "); //
+    Serial.print(fileNumber); //
+    Serial.print(".csv in directory."); //
+    Serial.println(); //
 
     // Setup file
     out.println("Hello " + subsystem + "!");
@@ -145,17 +147,17 @@ void createFile()
     out.println(F(" -Rahul"));
     out.println();
     out.println();
-    //  if (SD.exists("readme.txt")){
-    //    Serial.println("README file exists!");
-    //    File readMe = SD.open("readme.txt", FILE_READ);
-    //    while (readMe.peek() != -1){
-    //      out.print(char(readMe.read()));
-    //    }
-    //    out.println();
-    //    out.println();
-    //  }
+      if (SD.exists("readme.txt")){ //
+        Serial.println("README file exists!"); //
+        File readMe = SD.open("readme.txt", FILE_READ); //
+        while (readMe.peek() != -1){ //
+          out.print(char(readMe.read())); //
+        }
+        out.println(); //
+        out.println(); //
+      }
     out.print("Accel1_X,Accel1_Y,Accel1_Z,Gyro1_X,Gyro1_Y,Gyro1_Z,,");
-    //  out.print("Accel2_X,Accel2_Y,Accel2_Z,Gyro2_X,Gyro2_Y,Gyro2_Z,,");
+    out.print("Accel2_X,Accel2_Y,Accel2_Z,Gyro2_X,Gyro2_Y,Gyro2_Z,,");
     out.println("Sample_Time (µs)");
 }
 
@@ -163,11 +165,11 @@ void run()
 {
 
     accel_t_gyro_union accel_t_gyro1;
-    // accel_t_gyro_union accel_t_gyro2;
+    accel_t_gyro_union accel_t_gyro2; //
 
     // Read raw values
     MPU6050_read(ADDRESS1, 0x3B, (uint8_t *)&accel_t_gyro1, sizeof(accel_t_gyro1));
-    // MPU6050_read(ADDRESS2, 0x3B, (uint8_t *) &accel_t_gyro2, sizeof(accel_t_gyro2));
+    MPU6050_read(ADDRESS2, 0x3B, (uint8_t *) &accel_t_gyro2, sizeof(accel_t_gyro2)); //
 
     // Swap values
     uint8_t swap;
@@ -183,12 +185,12 @@ void run()
     SWAP(accel_t_gyro1.reg.y_gyro_h, accel_t_gyro1.reg.y_gyro_l);
     SWAP(accel_t_gyro1.reg.z_gyro_h, accel_t_gyro1.reg.z_gyro_l);
 
-    // SWAP (accel_t_gyro2.reg.x_accel_h, accel_t_gyro2.reg.x_accel_l);
-    // SWAP (accel_t_gyro2.reg.y_accel_h, accel_t_gyro2.reg.y_accel_l);
-    // SWAP (accel_t_gyro2.reg.z_accel_h, accel_t_gyro2.reg.z_accel_l);
-    // SWAP (accel_t_gyro2.reg.x_gyro_h, accel_t_gyro2.reg.x_gyro_l);
-    // SWAP (accel_t_gyro2.reg.y_gyro_h, accel_t_gyro2.reg.y_gyro_l);
-    // SWAP (accel_t_gyro2.reg.z_gyro_h, accel_t_gyro2.reg.z_gyro_l);
+    SWAP (accel_t_gyro2.reg.x_accel_h, accel_t_gyro2.reg.x_accel_l); //
+    SWAP (accel_t_gyro2.reg.y_accel_h, accel_t_gyro2.reg.y_accel_l); //
+    SWAP (accel_t_gyro2.reg.z_accel_h, accel_t_gyro2.reg.z_accel_l); //
+    SWAP (accel_t_gyro2.reg.x_gyro_h, accel_t_gyro2.reg.x_gyro_l); //
+    SWAP (accel_t_gyro2.reg.y_gyro_h, accel_t_gyro2.reg.y_gyro_l); //
+    SWAP (accel_t_gyro2.reg.z_gyro_h, accel_t_gyro2.reg.z_gyro_l); //
 
     // Print raw values
 
@@ -209,31 +211,31 @@ void run()
     out.print(F(",,"));
 
     // // Print the raw acceleration values (2)
-    // out.print(accel_t_gyro2.value.x_accel, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro2.value.y_accel, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro2.value.z_accel, DEC);
-    // out.print(F(","));
+    out.print(accel_t_gyro2.value.x_accel, DEC); //
+    out.print(F(",")); //
+    out.print(accel_t_gyro2.value.y_accel, DEC); //
+    out.print(F(",")); //
+    out.print(accel_t_gyro2.value.z_accel, DEC); //
+    out.print(F(",")); //
 
     // // Print the raw gyro values (2)
-    // out.print(accel_t_gyro2.value.x_gyro, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro2.value.y_gyro, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro2.value.z_gyro, DEC);
-    // out.print(F(",,"));
+    out.print(accel_t_gyro2.value.x_gyro, DEC); //
+    out.print(F(",")); //
+    out.print(accel_t_gyro2.value.y_gyro, DEC); //
+    out.print(F(",")); //
+    out.print(accel_t_gyro2.value.z_gyro, DEC); //
+    out.print(F(",,")); //
 
     // Print time
     out.print(micros());
     out.println(F(""));
 
     // // Cleanup
-    // out.flush();
+    out.flush(); //
 }
 
 // --------------------------------------------------------
-// MPU6050_read
+// MPU6050_read 
 //
 // This is a common function to read multiple bytes
 // from an I2C device.

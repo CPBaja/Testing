@@ -1,0 +1,8 @@
+linear accelerations from all three
+time
+
+configure 32G scale
+
+line after line as fast as possible
+higher the frequency, better the data
+in .csv
