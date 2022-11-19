@@ -1,0 +1,30 @@
+accelerometer specs: 
+   • https://www.adafruit.com/product/4692#technical-details
+adafruit library documentation:
+   • https://github.com/adafruit/Adafruit_LSM6DS
+sensors integrated to arduino/c++/etc: 
+   • https://learn.adafruit.com/lsm6dsox-and-ism330dhc-6-dof-imu
+
+accelerometer:
+ • ±4/±8/±16/±32 g at 1.6 Hz to 6.7KHz update rate
+ • SPI or I2C
+
+accel:
+3.3V
+Ground
+SCL
+SDA
+
+running to teensy:
+3.3V
+Ground
+SCL
+SDA
+
+current code:
+ • written for MPU5060, it works perfectly for MPU. 
+ • broke MPU due to excessive vibes, heat and sending 5V instead of 3.3V.
+ • Issues with the code are mainly
+    • it only records 1 sensor right now
+    • it's written for MPU. So we need to adapt this to 3 of the new sensors
+    • needs to talk to 3 different sensors

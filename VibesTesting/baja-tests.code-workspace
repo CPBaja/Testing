@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../baja-tests"
+		},
+		{
+			"name": "cantest",
+			"path": "../../../PlatformIO/Projects/cantest"
+		},
+		{
+			"name": "VibesTesting",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
