@@ -50,6 +50,7 @@ int MPU6050_write_reg(int address, int reg, uint8_t data);
 int MPU6050_write(int address, int start, const uint8_t *pData, int size);
 void run();
 void createFile();
+void writeToFile(accel_t_gyro_union accel_t_gyro1);
 
 void setup()
 {
@@ -154,9 +155,15 @@ void createFile()
     //    out.println();
     //    out.println();
     //  }
-    out.print("Accel1_X,Accel1_Y,Accel1_Z,Gyro1_X,Gyro1_Y,Gyro1_Z,,");
+    out.print("Accel1_X,Accel1_Y,Accel1_Z,Gyro1_X,Gyro1_Y,Gyro1_Z,Sample_Time (µs)\n");
     //  out.print("Accel2_X,Accel2_Y,Accel2_Z,Gyro2_X,Gyro2_Y,Gyro2_Z,,");
-    out.println("Sample_Time (µs)");
+    //  out.println("Sample_Time (µs)");
+}
+
+void writeToFile(accel_t_gyro_union accel_t_gyro1) {
+    unsigned long time = micros();
+    out.printf("%i,%i,%i,%i,%i,%i, %lu\n", accel_t_gyro1.value.x_accel, accel_t_gyro1.value.y_accel, accel_t_gyro1.value.z_accel, accel_t_gyro1.value.x_gyro, accel_t_gyro1.value.y_gyro, accel_t_gyro1.value.z_gyro, time);
+    //out.flush();
 }
 
 void run()
@@ -192,44 +199,45 @@ void run()
 
     // Print raw values
 
-    // Print the raw acceleration values (1)
-    out.print(accel_t_gyro1.value.x_accel, DEC);
-    out.print(F(","));
-    out.print(accel_t_gyro1.value.y_accel, DEC);
-    out.print(F(","));
-    out.print(accel_t_gyro1.value.z_accel, DEC);
-    out.print(F(","));
-
-    // Print the raw gyro values (1)
-    out.print(accel_t_gyro1.value.x_gyro, DEC);
-    out.print(F(","));
-    out.print(accel_t_gyro1.value.y_gyro, DEC);
-    out.print(F(","));
-    out.print(accel_t_gyro1.value.z_gyro, DEC);
-    out.print(F(",,"));
-
-    // // Print the raw acceleration values (2)
-    // out.print(accel_t_gyro2.value.x_accel, DEC);
+    // // Print the raw acceleration values (1)
+    // out.print(accel_t_gyro1.value.x_accel, DEC);
     // out.print(F(","));
-    // out.print(accel_t_gyro2.value.y_accel, DEC);
+    // out.print(accel_t_gyro1.value.y_accel, DEC);
     // out.print(F(","));
-    // out.print(accel_t_gyro2.value.z_accel, DEC);
+    // out.print(accel_t_gyro1.value.z_accel, DEC);
     // out.print(F(","));
 
-    // // Print the raw gyro values (2)
-    // out.print(accel_t_gyro2.value.x_gyro, DEC);
+    // // Print the raw gyro values (1)
+    // out.print(accel_t_gyro1.value.x_gyro, DEC);
     // out.print(F(","));
-    // out.print(accel_t_gyro2.value.y_gyro, DEC);
+    // out.print(accel_t_gyro1.value.y_gyro, DEC);
     // out.print(F(","));
-    // out.print(accel_t_gyro2.value.z_gyro, DEC);
+    // out.print(accel_t_gyro1.value.z_gyro, DEC);
     // out.print(F(",,"));
 
-    // Print time
-    out.print(micros());
-    out.println(F(""));
+    // // // Print the raw acceleration values (2)
+    // // out.print(accel_t_gyro2.value.x_accel, DEC);
+    // // out.print(F(","));
+    // // out.print(accel_t_gyro2.value.y_accel, DEC);
+    // // out.print(F(","));
+    // // out.print(accel_t_gyro2.value.z_accel, DEC);
+    // // out.print(F(","));
 
-    // // Cleanup
-    // out.flush();
+    // // // Print the raw gyro values (2)
+    // // out.print(accel_t_gyro2.value.x_gyro, DEC);
+    // // out.print(F(","));
+    // // out.print(accel_t_gyro2.value.y_gyro, DEC);
+    // // out.print(F(","));
+    // // out.print(accel_t_gyro2.value.z_gyro, DEC);
+    // // out.print(F(",,"));
+
+    // // Print time
+    // out.print(micros());
+    // out.println(F(""));
+
+    // // // Cleanup
+    // // out.flush();
+    writeToFile(accel_t_gyro1);
 }
 
 // --------------------------------------------------------
