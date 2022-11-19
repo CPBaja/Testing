@@ -162,7 +162,7 @@ void createFile()
 
 void writeToFile(accel_t_gyro_union accel_t_gyro1) {
     unsigned long time = micros();
-    out.printf("%i,%i,%i,%i,%i,%i, %lu\n", accel_t_gyro1.value.x_accel, accel_t_gyro1.value.y_accel, accel_t_gyro1.value.z_accel, accel_t_gyro1.value.x_gyro, accel_t_gyro1.value.y_gyro, accel_t_gyro1.value.z_gyro, time);
+    out.printf("%i,%i,%i,%i,%i,%i,%lu\n", accel_t_gyro1.value.x_accel, accel_t_gyro1.value.y_accel, accel_t_gyro1.value.z_accel, accel_t_gyro1.value.x_gyro, accel_t_gyro1.value.y_gyro, accel_t_gyro1.value.z_gyro, time);
     //out.flush();
 }
 
