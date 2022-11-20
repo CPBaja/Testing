@@ -1,4 +1,4 @@
-#include <SD.h>
+#include <SD.h> 
 #include <SPI.h>
 #include <Wire.h>
 #include <Bounce2.h> // https://github.com/thomasfredericks/Bounce2
@@ -13,7 +13,8 @@
 String directory = "teensy";
 String subsystem = "Ben";
 
-Bounce2::Button button = Bounce2::Button(); // create a button object
+//Bounce2::Button button = Bounce2::Button(); // create a button object
+Button button = Button();
 
 File out;
 
@@ -65,22 +66,19 @@ sensors_event_t temp3;
 int MPU6050_read(int address, int start, uint8_t *buffer, int size);
 int MPU6050_write_reg(int address, int reg, uint8_t data);
 int MPU6050_write(int address, int start, const uint8_t *pData, int size);
-int ledState = LOW;
+int ledState;
+
+static bool isRunning = false;
 
 void run();
 void createFile();
 void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3);
 
-/*unsigned long startTime;
-const int BUTTONPIN = 24;
-int lastButtonState = 0;
-int LEDBUILTIN;
-unsigned long interval = 500UL;*/
-
 
 void setup()
 {
- 
+    ledState = 0;
+
     button.attach (BUTTON_PIN, INPUT_PULLUP); // attach debouncer to pin 24 with INPUT_PULLUP mode
     button.interval(50); // debounce intervall of 50 ms
     button.setPressedState(LOW);
@@ -88,27 +86,8 @@ void setup()
     pinMode(LED_PIN, OUTPUT);    // sets the pin 13 as output
     digitalWrite(LED_PIN, ledState); // turn off LED
 
-    //button.attach(BUTTON_PIN, INPUT);
-    //button.interval(5);
-
-    //pinMode(LEDBUILTIN, OUTPUT);
-    //pinMode(BUTTONPIN, INPUT);
-
     // // Open serial communications and wait for port to open:
-    // Serial.begin(9600);
-    // while (!Serial)
-    // {
-    //     ; // Wait for serial port to connect. Needed for native USB port only.
-    // }
-
-    // Setup Accelerometer
-    //  Wire.begin();
-    // Clear the 'sleep' bit to start the sensor.
-    //  MPU6050_write_reg(ADDRESS1, 0x6B, 0);
-    // MPU6050_write_reg(ADDRESS2, 0x6B, 0);
-    //  Set to 16G range
-    //  MPU6050_write_reg(ADDRESS1, 0x1C, bit(3) | bit(4));
-    // MPU6050_write_reg(ADDRESS2, 0x1C, bit(3)|bit(4));
+    Serial.begin(9600);
 
     //Attempt to connect gyro. If gyro is not found, freeze the program
     if (!lsm6d1.begin_I2C() || !lsm6d2.begin_I2C() || !lsm6d3.begin_I2C()) {
@@ -116,7 +95,7 @@ void setup()
             delay(10);
     }
   }
-
+    //sensor classes
     lsm6d1.setAccelRange(LSM6DSO32_ACCEL_RANGE_32_G);
     lsm6d1.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS);
     lsm6d1.setAccelDataRate(LSM6DS_RATE_6_66K_HZ);
@@ -154,76 +133,44 @@ void setup()
     }
 }
 
-void loop() {
-
+void loop() 
+{
     button.update(); // update bounce instance
-    if (button.pressed()) {
+
+    if (button.pressed()) 
+    {
         ledState = !ledState;
         digitalWrite(LED_PIN, ledState);
-        Serial.println("major slay");
-    }
-    /*else {
-        Serial.println("major L");
-        delay(3000);
-    }*/
-  } 
 
-/*{
-   
-  int buttonState = digitalRead(BUTTONPIN);
-  if (buttonState != lastButtonState) // on any state change...
-  {
-    startTime = millis();// .... reset the timer
-    delay(3000);
-  }
-  lastButtonState = buttonState;
-  
-  if (millis() - startTime <= interval)
-  {
-    digitalWrite(LEDBUILTIN, HIGH);
-    Serial.println("LETS GOOOO");
-  }
-  else
-  {
-    digitalWrite(LEDBUILTIN, LOW);
-    Serial.println(":'(");
-  } 
-}*/
-   
-   //digitalWrite(BUTTON_PIN, HIGH);
-   //delay(1000);
-   //digitalWrite(BUTTON_PIN, LOW);
-   //delay(1000);
-
-    //Serial.println("running lol");
-
-  /*  static bool isRunning = false;
-    button.update();
-    if (button.changed() && !button.read())
-    //if (button.read())
-    {
-        isRunning = !isRunning;
-        if (isRunning)
+        if(!isRunning)
         {
+            isRunning = true;
+            Serial.println("button pressed & is now running");
+            
             createFile();
-            digitalWrite(LED_BUILTIN, HIGH);
-            Serial.println("button pressed");
+            //Serial.println("file created");
+
         }
         else
         {
+            isRunning = false;
+
             out.flush();
             out.close();
-            digitalWrite(LED_BUILTIN, LOW);
-            Serial.println("well yikes");
+            Serial.println("button pressed & closing file");
         }
     }
-    if (isRunning)
+
+    if(isRunning)
     {
         run();
-        Serial.println("slay");
-        delay(3000);
-    }*/
-
+        //Serial.println(accel1);
+        //Serial.println(accel2);
+        //Serial.println(accel3);
+        //Serial.println(writeToFile);  
+    }
+}
+ 
 
 void createFile()
 {
@@ -249,195 +196,22 @@ void createFile()
     out.println(F(" -Rahul"));
     out.println();
     out.println();
-    //  if (SD.exists("readme.txt")){
-    //    Serial.println("README file exists!");
-    //    File readMe = SD.open("readme.txt", FILE_READ);
-    //    while (readMe.peek() != -1){
-    //      out.print(char(readMe.read()));
-    //    }
-    //    out.println();
-    //    out.println();
-    //  }
+    Serial.println("file created");
+
     out.print("Accel1_X,Accel1_Y,Accel1_Z,Accel2_X,Accel2_Y,Accel2_Z,Accel3_X,Accel3_Y,Accel3_Z,Sample_Time (µs)\n");
-    //  out.print("Accel2_X,Accel2_Y,Accel2_Z,Gyro2_X,Gyro2_Y,Gyro2_Z,,");
-    //  out.println("Sample_Time (µs)");
+
 }
 
 void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3) {
     unsigned long time = micros();
     out.printf("%i,%i,%i,%i,%i,%i,%i,%i,%i,%lu\n", accel1.acceleration.x, accel1.acceleration.y, accel1.acceleration.z, accel2.acceleration.x, accel2.acceleration.y, accel2.acceleration.z, accel3.acceleration.x, accel3.acceleration.y, accel3.acceleration.z, time);
-    //out.flush();
 }
 
 void run()
 {
-
-//     accel_t_gyro_union accel_t_gyro1;
-//     // accel_t_gyro_union accel_t_gyro2;
-
-//     // Read raw values
-//     MPU6050_read(ADDRESS1, 0x3B, (uint8_t *)&accel_t_gyro1, sizeof(accel_t_gyro1));
-//     // MPU6050_read(ADDRESS2, 0x3B, (uint8_t *) &accel_t_gyro2, sizeof(accel_t_gyro2));
-
-//     // Swap values
-//     uint8_t swap;
-// #define SWAP(x, y) 
-//     swap = x;      
-//     x = y;         
-//     y = swap
-
-//     SWAP(accel_t_gyro1.reg.x_accel_h, accel_t_gyro1.reg.x_accel_l);
-//     SWAP(accel_t_gyro1.reg.y_accel_h, accel_t_gyro1.reg.y_accel_l);
-//     SWAP(accel_t_gyro1.reg.z_accel_h, accel_t_gyro1.reg.z_accel_l);
-//     SWAP(accel_t_gyro1.reg.x_gyro_h, accel_t_gyro1.reg.x_gyro_l);
-//     SWAP(accel_t_gyro1.reg.y_gyro_h, accel_t_gyro1.reg.y_gyro_l);
-//     SWAP(accel_t_gyro1.reg.z_gyro_h, accel_t_gyro1.reg.z_gyro_l);
-
-    // SWAP (accel_t_gyro2.reg.x_accel_h, accel_t_gyro2.reg.x_accel_l);
-    // SWAP (accel_t_gyro2.reg.y_accel_h, accel_t_gyro2.reg.y_accel_l);
-    // SWAP (accel_t_gyro2.reg.z_accel_h, accel_t_gyro2.reg.z_accel_l);
-    // SWAP (accel_t_gyro2.reg.x_gyro_h, accel_t_gyro2.reg.x_gyro_l);
-    // SWAP (accel_t_gyro2.reg.y_gyro_h, accel_t_gyro2.reg.y_gyro_l);
-    // SWAP (accel_t_gyro2.reg.z_gyro_h, accel_t_gyro2.reg.z_gyro_l);
-
-    // Print raw values
-
-    // // Print the raw acceleration values (1)
-    // out.print(accel_t_gyro1.value.x_accel, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro1.value.y_accel, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro1.value.z_accel, DEC);
-    // out.print(F(","));
-
-    // // Print the raw gyro values (1)
-    // out.print(accel_t_gyro1.value.x_gyro, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro1.value.y_gyro, DEC);
-    // out.print(F(","));
-    // out.print(accel_t_gyro1.value.z_gyro, DEC);
-    // out.print(F(",,"));
-
-    // // // Print the raw acceleration values (2)
-    // // out.print(accel_t_gyro2.value.x_accel, DEC);
-    // // out.print(F(","));
-    // // out.print(accel_t_gyro2.value.y_accel, DEC);
-    // // out.print(F(","));
-    // // out.print(accel_t_gyro2.value.z_accel, DEC);
-    // // out.print(F(","));
-
-    // // // Print the raw gyro values (2)
-    // // out.print(accel_t_gyro2.value.x_gyro, DEC);
-    // // out.print(F(","));
-    // // out.print(accel_t_gyro2.value.y_gyro, DEC);
-    // // out.print(F(","));
-    // // out.print(accel_t_gyro2.value.z_gyro, DEC);
-    // // out.print(F(",,"));
-
-    // // Print time
-    // out.print(micros());
-    // out.println(F(""));
-
-    // // // Cleanup
-    // // out.flush();
     lsm6d1.getEvent(&accel1, &gyro1, &temp1);
-    lsm6d1.getEvent(&accel2, &gyro2, &temp2);
-    lsm6d1.getEvent(&accel3, &gyro3, &temp3);
+    lsm6d2.getEvent(&accel2, &gyro2, &temp2);
+    lsm6d3.getEvent(&accel3, &gyro3, &temp3);
 
     writeToFile(accel1, accel2, accel3);
-}
-
-// --------------------------------------------------------
-// MPU6050_read
-//
-// This is a common function to read multiple bytes
-// from an I2C device.
-//
-// It uses the boolean parameter for Wire.endTransMission()
-// to be able to hold or release the I2C-bus.
-// This is implemented in Arduino 1.0.1.
-//
-// Only this function is used to read.
-// There is no function for a single byte.
-//
-int MPU6050_read(int address, int start, uint8_t *buffer, int size)
-{
-    int i, n;
-
-    Wire.beginTransmission(address);
-    n = Wire.write(start);
-    if (n != 1)
-        return (-10);
-
-    n = Wire.endTransmission(false); // hold the I2C-bus
-    if (n != 0)
-        return (n);
-
-    // Third parameter is true: relase I2C-bus after data is read.
-    Wire.requestFrom(address, size, 1);
-    i = 0;
-    while (Wire.available() && i < size)
-    {
-        buffer[i++] = Wire.read();
-    }
-    if (i != size)
-        return (-11);
-
-    return (0); // return : no error
-}
-
-// --------------------------------------------------------
-// MPU6050_write
-//
-// This is a common function to write multiple bytes to an I2C device.
-//
-// If only a single register is written,
-// use the function MPU_6050_write_reg().
-//
-// Parameters:
-//   start : Start address, use a define for the register
-//   pData : A pointer to the data to write.
-//   size  : The number of bytes to write.
-//
-// If only a single register is written, a pointer
-// to the data has to be used, and the size is
-// a single byte:
-//   int data = 0;        // the data to write
-//   MPU6050_write (address, 0x6B, &c, 1);
-//
-int MPU6050_write(int address, int start, const uint8_t *pData, int size)
-{
-    int n, error;
-
-    Wire.beginTransmission(address);
-    n = Wire.write(start); // write the start address
-    if (n != 1)
-        return (-20);
-
-    n = Wire.write(pData, size); // write data bytes
-    if (n != size)
-        return (-21);
-
-    error = Wire.endTransmission(true); // release the I2C-bus
-    if (error != 0)
-        return (error);
-
-    return (0); // return : no error
-}
-
-// --------------------------------------------------------
-// MPU6050_write_reg
-//
-// An extra function to write a single register.
-// It is just a wrapper around the MPU_6050_write()
-// function, and it is only a convenient function
-// to make it easier to write a single register.
-//
-int MPU6050_write_reg(int address, int reg, uint8_t data)
-{
-    int error;
-
-    error = MPU6050_write(address, reg, &data, 1);
-
-    return (error);
 }
