@@ -1,10 +1,11 @@
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <Bounce2.h>
+#include <Bounce2.h> // https://github.com/thomasfredericks/Bounce2
 #include <Adafruit_LSM6DSO32.h>
 
-#define BUTTON_PIN 20
+#define BUTTON_PIN 24
+#define LED_PIN 13
 
 #define ADDRESS1 0x68
 //#define ADDRESS2 0x69
@@ -12,7 +13,8 @@
 String directory = "teensy";
 String subsystem = "Ben";
 
-Bounce button = Bounce();
+Bounce2::Button button = Bounce2::Button(); // create a button object
+
 File out;
 
 Adafruit_LSM6DSO32 lsm6d1 = Adafruit_LSM6DSO32();
@@ -63,16 +65,34 @@ sensors_event_t temp3;
 int MPU6050_read(int address, int start, uint8_t *buffer, int size);
 int MPU6050_write_reg(int address, int reg, uint8_t data);
 int MPU6050_write(int address, int start, const uint8_t *pData, int size);
+int ledState = LOW;
+
 void run();
 void createFile();
 void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3);
 
+/*unsigned long startTime;
+const int BUTTONPIN = 24;
+int lastButtonState = 0;
+int LEDBUILTIN;
+unsigned long interval = 500UL;*/
+
+
 void setup()
 {
-    button.attach(BUTTON_PIN, INPUT);
-    button.interval(5);
+ 
+    button.attach (BUTTON_PIN, INPUT_PULLUP); // attach debouncer to pin 24 with INPUT_PULLUP mode
+    button.interval(50); // debounce intervall of 50 ms
+    button.setPressedState(LOW);
+    
+    pinMode(LED_PIN, OUTPUT);    // sets the pin 13 as output
+    digitalWrite(LED_PIN, ledState); // turn off LED
 
-    pinMode(LED_BUILTIN, OUTPUT);
+    //button.attach(BUTTON_PIN, INPUT);
+    //button.interval(5);
+
+    //pinMode(LEDBUILTIN, OUTPUT);
+    //pinMode(BUTTONPIN, INPUT);
 
     // // Open serial communications and wait for port to open:
     // Serial.begin(9600);
@@ -134,30 +154,76 @@ void setup()
     }
 }
 
-void loop()
-{
-    static bool isRunning = false;
+void loop() {
+
+    button.update(); // update bounce instance
+    if (button.pressed()) {
+        ledState = !ledState;
+        digitalWrite(LED_PIN, ledState);
+        Serial.println("major slay");
+    }
+    /*else {
+        Serial.println("major L");
+        delay(3000);
+    }*/
+  } 
+
+/*{
+   
+  int buttonState = digitalRead(BUTTONPIN);
+  if (buttonState != lastButtonState) // on any state change...
+  {
+    startTime = millis();// .... reset the timer
+    delay(3000);
+  }
+  lastButtonState = buttonState;
+  
+  if (millis() - startTime <= interval)
+  {
+    digitalWrite(LEDBUILTIN, HIGH);
+    Serial.println("LETS GOOOO");
+  }
+  else
+  {
+    digitalWrite(LEDBUILTIN, LOW);
+    Serial.println(":'(");
+  } 
+}*/
+   
+   //digitalWrite(BUTTON_PIN, HIGH);
+   //delay(1000);
+   //digitalWrite(BUTTON_PIN, LOW);
+   //delay(1000);
+
+    //Serial.println("running lol");
+
+  /*  static bool isRunning = false;
     button.update();
     if (button.changed() && !button.read())
+    //if (button.read())
     {
         isRunning = !isRunning;
         if (isRunning)
         {
             createFile();
             digitalWrite(LED_BUILTIN, HIGH);
+            Serial.println("button pressed");
         }
         else
         {
             out.flush();
             out.close();
             digitalWrite(LED_BUILTIN, LOW);
+            Serial.println("well yikes");
         }
     }
     if (isRunning)
     {
         run();
-    }
-}
+        Serial.println("slay");
+        delay(3000);
+    }*/
+
 
 void createFile()
 {
@@ -170,10 +236,10 @@ void createFile()
     } while (SD.exists(filename));
 
     out = SD.open(filename, FILE_WRITE_BEGIN);
-    // Serial.print("Created file ");
-    // Serial.print(fileNumber);
-    // Serial.print(".csv in directory.");
-    // Serial.println();
+    Serial.print("Created file "); //
+    Serial.print(fileNumber);
+    Serial.print(".csv in directory.");
+    Serial.println();   //
 
     // Setup file
     out.println("Hello " + subsystem + "!");
@@ -215,9 +281,9 @@ void run()
 
 //     // Swap values
 //     uint8_t swap;
-// #define SWAP(x, y) \
-//     swap = x;      \
-//     x = y;         \
+// #define SWAP(x, y) 
+//     swap = x;      
+//     x = y;         
 //     y = swap
 
 //     SWAP(accel_t_gyro1.reg.x_accel_h, accel_t_gyro1.reg.x_accel_l);
