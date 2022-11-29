@@ -90,7 +90,7 @@ void setup()
     Serial.begin(9600);
 
     //Attempt to connect gyro. If gyro is not found, freeze the program
-    if (!lsm6d1.begin_I2C() || !lsm6d2.begin_I2C() || !lsm6d3.begin_I2C()) {
+    if (!lsm6d1.begin_I2C((uint8_t)106U, &Wire, 0L) || !lsm6d2.begin_I2C((uint8_t)106U, &Wire, 1L) || !lsm6d3.begin_I2C((uint8_t)106U, &Wire, 2L)) {
         while (1) {
             delay(10);
     }
