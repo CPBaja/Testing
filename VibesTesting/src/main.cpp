@@ -203,8 +203,8 @@ void createFile()
 }
 
 void writeToFile(sensors_event_t accel1, sensors_event_t accel2, sensors_event_t accel3) {
-    unsigned long time = micros();
-    out.printf("%i,%i,%i,%i,%i,%i,%i,%i,%i,%lu\n", accel1.acceleration.x, accel1.acceleration.y, accel1.acceleration.z, accel2.acceleration.x, accel2.acceleration.y, accel2.acceleration.z, accel3.acceleration.x, accel3.acceleration.y, accel3.acceleration.z, time);
+    //static unsigned long time = micros();
+    out.printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%lu\n", accel1.acceleration.x, accel1.acceleration.y, accel1.acceleration.z, accel2.acceleration.x, accel2.acceleration.y, accel2.acceleration.z, accel3.acceleration.x, accel3.acceleration.y, accel3.acceleration.z, micros());
 }
 
 void run()
