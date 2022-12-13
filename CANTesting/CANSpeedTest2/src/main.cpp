@@ -43,12 +43,15 @@ void loop() {
   diff = t2 - t1;
   t2 = millis();
   if(diff > 10) {
-    Serial.println(counter);
+    //Serial.println(counter);
     //Serial.printf("CAN messages sent: %n\n", counter);
+    
+    Serial.print(msg.data[0]);
+    Serial.println(msg.data[1]);
     counter = 0;
     t1 = t2;
   }
-  
+  msg.data[1] = msg.data[1]+1;
 }
 
 void sentMessages() {
