@@ -3,6 +3,13 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#define stp 23
+#define dir 22
+#define MS1 13
+#define MS2 14
+#define MS3 15
+#define EN 39
+
 HX711 lc;
 float val = 0;
 
@@ -17,6 +24,8 @@ unsigned long SpeedHistory[triggersPerRot * 2] = {0};
 bool updateEngineSpeed = 0;
 int steps = 200;       // Generic stepper motor
 int speed = steps * 1; // add conversion "something to give me speed"
+
+IntervalTimer ContorllerTimer;
 
 void engineHallISR()
 {
@@ -34,7 +43,7 @@ void engineHallISR()
     updateEngineSpeed = 1;
 }
 
-void controllerISR()
+void ControllerISR()
 {
 }
 
@@ -45,6 +54,7 @@ void setup()
     Serial.begin(115200);
     pinMode(0, INPUT);
     attachInterrupt(digitalPinToInterrupt(0), engineHallISR, RISING);
+    ContorllerTimer.begin(ControllerISR, 5000); // blinkLED to run every 0.005 seconds
 }
 
 void loop()
@@ -117,6 +127,34 @@ void updateStepper()
     }
 }
 
-void step(int speed)
+void step(int speed) // Input Speed in RPM
 {
+    digitalWrite(dir, LOW);
+    unsigned long currTime;
+    unsigned long prevTime;
+
+    currTime = micros();
+    if (currTime - prevTime >= speed)
+    {
+        digitalWrite(stp, HIGH); // Trigger one step forward
+        prevTime = currTime;
+    };
+
+    currTime = micros();
+    if (currTime - prevTime >= speed)
+    {
+        digitalWrite(stp, LOW); // Pull step pin low so it can be triggered again
+        prevTime = currTime;
+    };
+
+    resetBEDPins();
+}
+
+void resetBEDPins()
+{
+    digitalWrite(stp, LOW);
+    digitalWrite(dir, LOW);
+    digitalWrite(MS1, LOW);
+    digitalWrite(MS2, LOW);
+    digitalWrite(EN, HIGH);
 }
