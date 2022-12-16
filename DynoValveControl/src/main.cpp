@@ -119,14 +119,14 @@ void setup()
     pinMode(LS, INPUT_PULLUP); // setup limit switch
 
     attachInterrupt(digitalPinToInterrupt(HS), engineHallISR, RISING); // Attach engine speed interupt to the hall effect sensor
-    // ContorllerTimer.begin(ControllerISR, 5000);                        // Run control loop every 5 ms
+    ContorllerTimer.begin(ControllerISR, 5000);                        // Run control loop every 5 ms
 }
 
 void loop()
 {
     updateEngine();
-    // updateLC();
-    // updateStepper();
+    updateLC();
+    updateStepper();
     updateData();
 }
 
@@ -231,7 +231,6 @@ void updateStepper()
     case ZERO_RETURN:
         if (!digitalRead(LS)) // Trigger when the limit switch drives the pin to ground
         {
-            cli();
             step(0); // stop the stepper motor
             stepperSpeed = 0;
             engineOn = false;
@@ -239,7 +238,6 @@ void updateStepper()
             stepperOn = true;
             stepperState = REST;
             curSteps = 0;
-            sei();
         }
         else
         {
@@ -252,6 +250,7 @@ void updateStepper()
         {
             engineTarget = maxEngineSpeed;
             lastMaxMinEngineTime = micros();
+            engineIntegral = 0;
             engineOn = true;
             stepperState = CONTROL;
         }
@@ -259,13 +258,11 @@ void updateStepper()
         step(stepperSpeed);
         if (engineSpeed < 1500)
         {
-            cli();
             stepperSpeed = 0;
             engineOn = false;
             targetSteps = restPostion;
             stepperOn = true;
             stepperState = REST;
-            sei();
         }
     }
 }
@@ -287,9 +284,10 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
         {
             speed = maxStepperSpeed;
         }
-        unsigned long stepPeriod = 1 / ((speed * 0.10472) / (0.006056 * 1000000)); // convert RPM to micros/step
-        unsigned long currTime = micros();
+        unsigned long stepPeriod = 57915 / speed; // 1 / ((speed * 0.10472) / (0.006056 * 1000000)); // convert RPM to micros/step
 
+        sei();
+        unsigned long currTime = micros();
         if (currTime - lastStepTime > stepPeriod)
         {
             STP = HIGH;
@@ -309,6 +307,7 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
             STP = LOW;
             digitalWrite(STP, LOW);
         }
+        cli();
     }
 }
 
