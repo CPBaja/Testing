@@ -19,7 +19,7 @@
 HX711 lc;
 float val = 0;
 
-volatile byte rpmcount = 0;
+int rpmcount = 0;
 
 unsigned long lastStepTime = 0;
 bool STP = 0;
@@ -135,15 +135,15 @@ void engineHallISR()
     unsigned long currTime = micros();
     if (currTime - lastEngineTime > DeltaTime)
     {
+        rpmcount++;
         lastEngineTime = currTime;
         SpeedHistory[rpmcount] = currTime;
-        rpmcount++;
+        if (rpmcount > 8)
+        {
+            rpmcount = -1;
+        }
+        updateEngineSpeed = 1;
     }
-    if (rpmcount > 8)
-    {
-        rpmcount = 0;
-    }
-    updateEngineSpeed = 1;
 }
 
 void ControllerISR()
@@ -187,14 +187,17 @@ void ControllerISR()
 
 void updateEngine()
 {
+    sei();
     if (updateEngineSpeed)
     {
         engineSpeed = 120000000 / (SpeedHistory[rpmcount] - SpeedHistory[(rpmcount + 1) % (2 * triggersPerRot + 1)]);
+        updateEngineSpeed = false;
     }
     if (micros() - lastEngineTime > 500000)
     {
         engineSpeed = 0;
     }
+    cli();
 }
 
 void updateLC()
