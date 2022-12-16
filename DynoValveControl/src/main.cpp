@@ -77,7 +77,7 @@ float stepperKP = 1;
 float stepperKI = 0.1;
 int stepperIntegral = 0;
 int stepperSpeed = 0;      // how fast to move the stepper
-int maxStepperSpeed = 200; // RPM max stepper speed
+int maxStepperSpeed = 10; // RPM max stepper speed
 
 unsigned long lastDataWriteTime = 0;
 
@@ -107,8 +107,6 @@ void setup()
     {
     }
 
-    delay(1000); // Pause for 1000 ms
-
     lc.begin(LC1, LC2); // Setup loadcell
     lc.set_offset(0);
 
@@ -117,6 +115,8 @@ void setup()
     setupBEDPins(); // setup stepper driver
 
     pinMode(LS, INPUT_PULLUP); // setup limit switch
+
+    delay(1000); // Pause for 1000 ms
 
     attachInterrupt(digitalPinToInterrupt(HS), engineHallISR, RISING); // Attach engine speed interupt to the hall effect sensor
     ContorllerTimer.begin(ControllerISR, 5000);                        // Run control loop every 5 ms
@@ -214,11 +214,11 @@ void updateData()
     if (currTime - lastDataWriteTime > 10000)
     {
         lastDataWriteTime = currTime;
-        Serial.print(millis());
-        Serial.print(",");
-        Serial.print(val);
-        Serial.print(",");
-        Serial.println(engineSpeed);
+        // Serial.print(millis());
+        // Serial.print(",");
+        // Serial.print(val);
+        // Serial.print(",");
+        // Serial.println(engineSpeed);
     }
 }
 
@@ -228,6 +228,7 @@ void updateStepper()
     {
     case INIT:
         stepperState = ZERO_RETURN;
+        break;
     case ZERO_RETURN:
         if (!digitalRead(LS)) // Trigger when the limit switch drives the pin to ground
         {
@@ -243,6 +244,7 @@ void updateStepper()
         {
             step(-50);
         }
+        break;
 
     case REST:
         step(stepperSpeed);
@@ -254,6 +256,7 @@ void updateStepper()
             engineOn = true;
             stepperState = CONTROL;
         }
+        break;
     case CONTROL:
         step(stepperSpeed);
         if (engineSpeed < 1500)
@@ -263,7 +266,9 @@ void updateStepper()
             targetSteps = restPostion;
             stepperOn = true;
             stepperState = REST;
+            Serial.println("Hello?");
         }
+        break;
     }
 }
 
@@ -291,7 +296,7 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
         if (currTime - lastStepTime > stepPeriod)
         {
             STP = HIGH;
-            digitalWrite(STP, HIGH);
+            digitalWrite(stp, HIGH);
             lastStepTime = currTime;
             if (speed > 0)
             {
@@ -301,11 +306,15 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
             {
                 curSteps -= 1;
             }
+            Serial.print("Step On: ");
+            Serial.println(currTime);
         }
         else if (STP && currTime - lastStepTime > 20)
         {
             STP = LOW;
-            digitalWrite(STP, LOW);
+            digitalWrite(stp, LOW);
+            Serial.print("Step Off");
+            Serial.println(currTime);
         }
         cli();
     }
