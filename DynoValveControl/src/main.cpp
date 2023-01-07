@@ -76,7 +76,7 @@ bool stepperOn = 0; // Turn on and off stepper controller
 float stepperKP = 1;
 float stepperKI = 0.1;
 int stepperIntegral = 0;
-int stepperSpeed = 0;      // how fast to move the stepper
+int stepperSpeed = 0;     // how fast to move the stepper
 int maxStepperSpeed = 10; // RPM max stepper speed
 
 unsigned long lastDataWriteTime = 0;
@@ -136,12 +136,12 @@ void engineHallISR()
     if (currTime - lastEngineTime > DeltaTime)
     {
         rpmcount++;
+        if (rpmcount > 2 * triggersPerRot)
+        {
+            rpmcount = 0;
+        }
         lastEngineTime = currTime;
         SpeedHistory[rpmcount] = currTime;
-        if (rpmcount > 8)
-        {
-            rpmcount = -1;
-        }
         updateEngineSpeed = 1;
     }
 }
