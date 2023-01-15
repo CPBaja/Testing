@@ -36,16 +36,16 @@ int stepangle = 360 / steps; // step angle
 
 int minEngineSpeed = 2400;                                                          // RPM
 int maxEngineSpeed = 3600;                                                          // RPM
-unsigned long enginePeriod = 4 * 60 * 1000 * 1000;                                  // min*60*1000*1000 = us
+unsigned long enginePeriod = 0.5 * 60 * 1000 * 1000;                                // min*60*1000*1000 = us
 unsigned long engineSlope = (enginePeriod / 2) / (maxEngineSpeed - minEngineSpeed); // delta us / engine speed
 int engineTarget = maxEngineSpeed;                                                  // RPM
 bool speedUpEngine = 0;                                                             // 1 = increase engine speed, 0 = slow down engine speed
 unsigned long lastMaxMinEngineTime = 0;                                             // last time the target engine speed was at a min or max value
 
 bool engineOn = 0;
-float engineKP = 1;
-float engineKI = 0.1;
-int engineIntegral = 0;
+float engineKP = 0.5;
+float engineKI = 0.01;
+long engineIntegral = 0;
 
 int valveTargetPos = 0; // Target valve pos
 
@@ -64,17 +64,17 @@ int valveTargetPos = 0; // Target valve pos
 
 int valveMinPos = 0;       // Fully open valve
 int valveMaxPos = 1000;    // Fully closed valve
-int minPosSteps = 500;     // Number of steps at open valve
-int maxPosSteps = 6000;    // Number of steps at closed valve
-int absMaxPosSteps = 6700; // Checked for saftey when attempting to acutate stepper, won't step if curStep >=  absMaxPosSteps
+int minPosSteps = 3000;    // Number of steps at open valve
+int maxPosSteps = 7300;    // Number of steps at closed valve
+int absMaxPosSteps = 7300; // Checked for saftey when attempting to acutate stepper, won't step if curStep >=  absMaxPosSteps
 int restPostion = 1000;    // Move away from the zero postion at rest by this much
 
 int targetSteps = 0; // target postion in steps, ie scaled valveTargetPos
 int curSteps = 0;    // Count the number of steps (current position)
 
 bool stepperOn = 0; // Turn on and off stepper controller
-float stepperKP = 1;
-float stepperKI = 0.1;
+float stepperKP = 0.25;
+float stepperKI = 0;
 int stepperIntegral = 0;
 int stepperSpeed = 0;     // how fast to move the stepper
 int maxStepperSpeed = 10; // RPM max stepper speed
@@ -143,35 +143,51 @@ void engineHallISR()
         lastEngineTime = currTime;
         SpeedHistory[rpmcount] = currTime;
         updateEngineSpeed = 1;
+        // Serial.println("LF Accept");
+    }
+    else
+    {
+        // Serial.println("HF Reject");
     }
 }
 
 void ControllerISR()
 {
     unsigned long currTime = micros();
-    if (speedUpEngine)
-    {
-        engineTarget = (currTime - lastMaxMinEngineTime) / engineSlope + minEngineSpeed;
-    }
-    else
-    {
-        engineTarget = maxEngineSpeed - (currTime - lastMaxMinEngineTime) / engineSlope;
-    }
+    // if (speedUpEngine)
+    // {
+    //     engineTarget = (currTime - lastMaxMinEngineTime) / engineSlope + minEngineSpeed;
+    // }
+    // else
+    // {
+    //     engineTarget = maxEngineSpeed - (currTime - lastMaxMinEngineTime) / engineSlope;
+    // }
 
-    if (engineTarget > maxEngineSpeed || engineTarget < minEngineSpeed)
-    {
-        speedUpEngine = !speedUpEngine;
-        lastMaxMinEngineTime = micros();
-    }
+    // if (engineTarget > maxEngineSpeed || engineTarget < minEngineSpeed)
+    // {
+    //     speedUpEngine = !speedUpEngine;
+    //     lastMaxMinEngineTime = micros();
+    // }
+    engineTarget = 3000;
 
     if (engineOn)
     {
-        int engineError = engineTarget - engineSpeed;
+        int engineError = engineSpeed - engineTarget;
+        Serial.println(engineError);
+
         if (valveTargetPos < valveMaxPos && valveTargetPos > valveMinPos)
         {
             engineIntegral += engineError;
         }
         valveTargetPos = engineKP * engineError + engineKI * engineIntegral;
+        if (valveTargetPos > valveMaxPos)
+        {
+            valveTargetPos = valveMaxPos;
+        }
+        else if (valveTargetPos < valveMinPos)
+        {
+            valveTargetPos = valveMinPos;
+        }
         targetSteps = minPosSteps + (maxPosSteps - minPosSteps) * (valveTargetPos - valveMinPos) / (valveMaxPos - valveMinPos);
     }
     if (stepperOn)
@@ -187,7 +203,7 @@ void ControllerISR()
 
 void updateEngine()
 {
-    sei();
+    cli();
     if (updateEngineSpeed)
     {
         engineSpeed = 120000000 / (SpeedHistory[rpmcount] - SpeedHistory[(rpmcount + 1) % (2 * triggersPerRot + 1)]);
@@ -197,7 +213,7 @@ void updateEngine()
     {
         engineSpeed = 0;
     }
-    cli();
+    sei();
 }
 
 void updateLC()
@@ -211,14 +227,24 @@ void updateLC()
 void updateData()
 {
     unsigned int currTime = micros();
-    if (currTime - lastDataWriteTime > 10000)
+    if (false && currTime - lastDataWriteTime > 50000)
     {
         lastDataWriteTime = currTime;
-        // Serial.print(millis());
-        // Serial.print(",");
-        // Serial.print(val);
-        // Serial.print(",");
-        // Serial.println(engineSpeed);
+        Serial.print(curSteps);
+        Serial.print(",");
+        Serial.print(targetSteps);
+        Serial.print(",");
+        Serial.print(valveTargetPos);
+        Serial.print(",");
+        Serial.print(engineSpeed);
+        Serial.print(",");
+        Serial.print(engineIntegral);
+        Serial.print(",");
+        Serial.print(engineSpeed - engineTarget);
+        Serial.print(",");
+        Serial.print(engineTarget);
+        Serial.print(",");
+        Serial.println(engineSpeed);
     }
 }
 
@@ -232,6 +258,7 @@ void updateStepper()
     case ZERO_RETURN:
         if (!digitalRead(LS)) // Trigger when the limit switch drives the pin to ground
         {
+            Serial.println("Triggered!");
             step(0); // stop the stepper motor
             stepperSpeed = 0;
             engineOn = false;
@@ -242,13 +269,13 @@ void updateStepper()
         }
         else
         {
-            step(-50);
+            step(-10);
         }
         break;
 
     case REST:
         step(stepperSpeed);
-        if (engineSpeed > 3500 && abs(curSteps - restPostion) < 0.05 * restPostion)
+        if (engineSpeed > 2000)
         {
             engineTarget = maxEngineSpeed;
             lastMaxMinEngineTime = micros();
@@ -259,14 +286,13 @@ void updateStepper()
         break;
     case CONTROL:
         step(stepperSpeed);
-        if (engineSpeed < 1500)
+        if (engineSpeed < 1200)
         {
             stepperSpeed = 0;
             engineOn = false;
             targetSteps = restPostion;
             stepperOn = true;
             stepperState = REST;
-            Serial.println("Hello?");
         }
         break;
     }
@@ -274,8 +300,9 @@ void updateStepper()
 
 void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms)
 {
-    if (speed != 0)
+    if (speed != 0 && !(curSteps > absMaxPosSteps && speed > 0) && !(!digitalRead(LS) && speed < 0))
     {
+        bool posSpeed = 1;
         if (speed > 0)
         {
             digitalWrite(dir, LOW);
@@ -284,6 +311,7 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
         {
             digitalWrite(dir, HIGH);
             speed = -speed;
+            posSpeed = 0;
         }
         if (speed > maxStepperSpeed)
         {
@@ -291,14 +319,14 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
         }
         unsigned long stepPeriod = 57915 / speed; // 1 / ((speed * 0.10472) / (0.006056 * 1000000)); // convert RPM to micros/step
 
-        sei();
+        cli();
         unsigned long currTime = micros();
         if (currTime - lastStepTime > stepPeriod)
         {
             STP = HIGH;
             digitalWrite(stp, HIGH);
             lastStepTime = currTime;
-            if (speed > 0)
+            if (posSpeed)
             {
                 curSteps += 1;
             }
@@ -306,17 +334,17 @@ void step(int speed) // Input Speed in RPM, saturate to max speed (delay of 1 ms
             {
                 curSteps -= 1;
             }
-            Serial.print("Step On: ");
-            Serial.println(currTime);
+            // Serial.print("Step On: ");
+            // Serial.println(currTime);
         }
-        else if (STP && currTime - lastStepTime > 20)
+        else if (STP && currTime - lastStepTime > 5)
         {
             STP = LOW;
             digitalWrite(stp, LOW);
-            Serial.print("Step Off");
-            Serial.println(currTime);
+            // Serial.print("Step Off");
+            // Serial.println(currTime);
         }
-        cli();
+        sei();
     }
 }
 
@@ -334,5 +362,5 @@ void setupBEDPins()
     digitalWrite(MS1, LOW);
     digitalWrite(MS2, LOW);
     digitalWrite(MS3, LOW);
-    digitalWrite(EN, HIGH);
+    digitalWrite(EN, LOW);
 }
