@@ -26,7 +26,7 @@ void setup() {
 
   counter = 0;
 
-  timer.begin(readMessages, 1000000);
+  //timer.begin(readMessages, 1000000);
 }
 
 void loop() {
@@ -35,13 +35,15 @@ void loop() {
     read_data = ((msg.data[0] << 8) | msg.data[1]);
   }
 
-  t1 = millis();
+  
 
   time = t1 - t2;
+  t1 = millis();
 
   if(time > 10) {
     t2 = t1;
-    Serial.println(counter);
+    //Serial.println(counter);
+    Serial.printf("%i\n", read_data);
     counter = 0;
   }
   
